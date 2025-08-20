@@ -38,42 +38,48 @@ class Library:
         self._books = []
         self.load_books()
     
+
     def add_book(self, isbn):
         if self.find_book(isbn):
-                print(f"{isbn} zaten kütüphanede mevcut.")
-                return
-        
+            print(f"{isbn} zaten kütüphanede mevcut.")
+            return self.find_book(isbn)
+
         url = f"https://openlibrary.org/isbn/{isbn}.json"
         try:
             response = httpx.get(url, follow_redirects=True)
             response.raise_for_status()
-
             data = response.json()
+
             title = data.get("title", "Bilinmeyen Başlık")
 
-            authors = []
+            # --- Yazar(lar) ---
+            authors: list[str] = []
 
-            if "author" in data and isinstance(data["author"], list):
+            if isinstance(data.get("author"), list) and all(isinstance(a, str) for a in data["author"]):
                 authors = data["author"]
 
-            elif "authors" in data and isinstance(data["authors"], list):
-                for author in data.get("authors", []):
-                    author_url = f"https://openlibrary.org{author['key']}.json"
+            elif isinstance(data.get("authors"), list):
+                for a in data["authors"]:
+                    key = a.get("key")
+                    if not key:
+                        continue
+                    author_url = f"https://openlibrary.org{key}.json"
                     try:
                         author_resp = httpx.get(author_url, follow_redirects=True)
                         author_resp.raise_for_status()
                         author_data = author_resp.json()
-                        authors.append(author_data.get("name", "Bilinmeyen Yazar"))
+                        name = author_data.get("name") or author_data.get("author") or "Bilinmeyen Yazar"
+                        authors.append(name)
                     except Exception:
                         authors.append("Bilinmeyen Yazar")
 
             author = ", ".join(authors) if authors else "Bilinmeyen Yazar"
 
             new_book = Book(title, author, isbn)
-            
             self._books.append(new_book)
             self.save_books()
             print(f"Kitap eklendi: {new_book}")
+            return new_book
 
         except httpx.HTTPStatusError as e:
             print(f"Kitap bulunamadı (HTTP {e.response.status_code})")
