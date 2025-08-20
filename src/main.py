@@ -24,14 +24,8 @@ while True:
     print("")
     
     if secim == "1":
-        title = input("Kitap adı: ")
-        author = input("Kitabın yazarı: ")
-        isbn = input("Kitabın ISBN numarası: ")
-
-        new_book = Book(title,author,isbn)
+        new_book = input("Kitabın ISBN numarası: ")
         library.add_book(new_book)
-
-        print("\nKitap başarıyla eklendi")
 
     elif secim == "2":
         isbn = input("Silmek istediğiniz kitabın ISBN numarasını yazınız: ")
